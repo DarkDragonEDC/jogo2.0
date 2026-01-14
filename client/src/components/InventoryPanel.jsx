@@ -40,225 +40,243 @@ const InventoryPanel = ({ inventory = {}, socket, silver = 0, onShowInfo }) => {
         return true;
     });
 
+    const totalSlots = 50;
+    const usedSlots = Object.keys(inventory).length;
+
+    // Heuristic price calculation for display
+    const getSellPrice = (data) => (data.tier * 5) + ((data.quality || 0) * 10);
+
     return (
-        <div className="glass-panel" style={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            borderRadius: '16px',
-            background: 'rgba(15, 20, 30, 0.4)'
-        }}>
+        <div className="panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{
-                padding: '25px 35px',
+                marginBottom: '1rem',
                 borderBottom: '1px solid var(--border)',
+                paddingBottom: '0.5rem',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                <div>
-                    <h2 style={{ margin: 0, color: '#fff', fontSize: '1.4rem', fontWeight: '900', letterSpacing: '1px' }}>INVENTÁRIO</h2>
-                    <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px' }}>BACKPACK & STORAGE</div>
-                </div>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    background: 'rgba(212,175,55,0.03)',
-                    padding: '8px 15px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(212,175,55,0.1)'
-                }}>
-                    <Coins size={14} color="#d4af37" />
-                    <span style={{ fontWeight: '900', color: '#d4af37', fontSize: '0.9rem', fontFamily: 'monospace' }}>
-                        {silver.toLocaleString()}
-                    </span>
-                </div>
+                <h3 style={{ margin: 0, color: '#fff' }}>Inventory</h3>
             </div>
 
-            <div className="scroll-container" style={{ padding: '30px 35px' }}>
-                {/* Filters - HUB Style */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '30px', flexWrap: 'wrap' }}>
-                    {filterCategories.map(cat => (
-                        <button
-                            key={cat.id}
-                            onClick={() => setFilter(cat.id)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '8px 16px',
-                                background: filter === cat.id ? 'var(--accent-soft)' : 'rgba(255,255,255,0.02)',
-                                border: '1px solid',
-                                borderColor: filter === cat.id ? 'var(--border-active)' : 'rgba(255,255,255,0.03)',
-                                borderRadius: '6px',
-                                color: filter === cat.id ? '#d4af37' : '#555',
-                                fontSize: '0.65rem',
-                                fontWeight: '900',
-                                letterSpacing: '1px',
-                                textTransform: 'uppercase'
-                            }}
-                        >
-                            {cat.icon} {cat.label}
-                        </button>
-                    ))}
-                </div>
+            <div style={{
+                display: 'flex',
+                gap: '6px',
+                marginBottom: '12px',
+                flexWrap: 'wrap',
+                padding: '8px',
+                background: 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '8px'
+            }}>
+                {filterCategories.map(cat => (
+                    <button
+                        key={cat.id}
+                        onClick={() => setFilter(cat.id)}
+                        style={{
+                            padding: '6px 12px',
+                            fontSize: '0.75rem',
+                            border: filter === cat.id ? '1px solid var(--accent)' : '1px solid var(--border)',
+                            background: filter === cat.id ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                            color: filter === cat.id ? 'var(--accent)' : 'var(--text-dim)',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: filter === cat.id ? 'bold' : 'normal',
+                            transition: '0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}
+                    >
+                        {cat.id === 'ALL' && <span>📦</span>}
+                        {cat.id === 'EQUIPMENT' && <span>⚔️</span>}
+                        {cat.id === 'RAW' && <span>🪨</span>}
+                        {cat.id === 'REFINED' && <span>⚡</span>}
+                        {cat.id === 'CONSUMABLES' && <span>🍖</span>}
+                        {cat.id === 'MAPS' && <span>🗺️</span>}
+                        <span>{cat.label}</span>
+                    </button>
+                ))}
+            </div>
 
-                {/* Grid - Thinner & Clean */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                    gap: '12px',
-                    paddingBottom: '100px'
-                }}>
-                    {filteredItems.map(([id, amount]) => {
-                        const data = resolveItem(id);
-                        const tierColor = getTierColor(data.tier || 1);
-                        const qualityColor = data.rarityColor || '#fff'; // Usa a cor da raridade se existir
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                <span>Slots Used:</span>
+                <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{usedSlots} / {totalSlots}</span>
+            </div>
 
+            <div className="inventory-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: '6px',
+                paddingBottom: '100px',
+                width: '100%',
+                overflowY: 'auto',
+                flex: 1
+            }}>
+                {Array.from({ length: totalSlots }).map((_, index) => {
+                    const itemEntry = filteredItems[index];
+
+                    if (!itemEntry) {
                         return (
-                            <div key={id} style={{
-                                background: 'rgba(0,0,0,0.2)',
-                                border: `1px solid ${data.quality > 0 ? qualityColor : 'rgba(255,255,255,0.02)'}`, // Borda colorida para qualidade
-                                borderRadius: '10px',
-                                padding: '15px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                position: 'relative',
-                                transition: '0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                                cursor: 'default',
-                                boxShadow: data.quality > 0 ? `0 0 10px ${qualityColor}20` : 'none'
-                            }}>
-                                <div style={{
+                            <div key={`empty-${index}`} style={{
+                                aspectRatio: '1/1.3',
+                                background: 'rgba(255, 255, 255, 0.02)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.03)'
+                            }}></div>
+                        );
+                    }
+
+                    const [id, amount] = itemEntry;
+                    const data = resolveItem(id);
+                    const tierColor = getTierColor(data.tier || 1);
+                    const qualityColor = data.rarityColor || '#fff';
+                    const sellPrice = getSellPrice(data);
+
+                    return (
+                        <div key={id} style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            padding: '8px',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
+                            fontSize: '0.65rem',
+                            border: data.quality > 0 ? `1px solid ${qualityColor}` : '1px solid var(--border)',
+                            aspectRatio: '1/1.3'
+                        }}>
+                            {/* Info Icon */}
+                            <div
+                                style={{
                                     position: 'absolute',
-                                    top: 8,
-                                    left: 8,
-                                    color: tierColor,
-                                    fontSize: '0.6rem',
-                                    fontWeight: '900',
-                                    opacity: 0.8
-                                }}>
-                                    T{data.tier}
-                                </div>
+                                    top: '4px',
+                                    right: '4px',
+                                    cursor: 'pointer',
+                                    color: 'var(--text-dim)',
+                                    zIndex: 2,
+                                    background: 'rgba(0, 0, 0, 0.5)',
+                                    borderRadius: '50%',
+                                    padding: '2px'
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onShowInfo(data);
+                                }}
+                            >
+                                <Info size={12} />
+                            </div>
 
-                                {data.quality > 0 && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 8,
-                                        right: 8,
-                                        color: qualityColor,
-                                        fontSize: '0.55rem',
-                                        fontWeight: '900',
-                                        textTransform: 'uppercase'
-                                    }}>
-                                        {data.qualityName}
-                                    </div>
-                                )}
+                            {/* Tier */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '4px',
+                                left: '4px',
+                                fontWeight: 'bold',
+                                color: tierColor
+                            }}>T{data.tier}</div>
 
-                                <div style={{
-                                    padding: '10px 0',
-                                    color: tierColor,
-                                    opacity: 0.9,
-                                    position: 'relative'
-                                }}>
-                                    <Package size={28} />
-                                    {/* Botão de Info (i) */}
-                                    <div
-                                        style={{
-                                            position: 'absolute',
-                                            top: -5,
-                                            right: -20,
-                                            opacity: 0.6,
-                                            cursor: 'help',
-                                            padding: '5px'
-                                        }}
+                            {/* Name */}
+                            <div style={{
+                                textAlign: 'center',
+                                overflow: 'hidden',
+                                height: '2.4em',
+                                lineHeight: '1.2em',
+                                marginBottom: '4px',
+                                width: '100%',
+                                marginTop: '16px',
+                                color: '#eee'
+                            }}>
+                                {data.name}
+                            </div>
+
+                            {/* Amount */}
+                            <div style={{ color: 'var(--accent)', fontWeight: 'bold', marginTop: '4px' }}>
+                                x{amount >= 1000 ? (amount / 1000).toFixed(1) + 'k' : amount}
+                            </div>
+
+                            {/* Price/Value */}
+                            <div style={{ display: 'flex', gap: '2px', alignItems: 'center', marginTop: '4px', color: 'var(--accent)', fontSize: '0.6rem' }}>
+                                <Coins size={10} />
+                                {sellPrice}
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ display: 'flex', gap: '2px', width: '100%', marginTop: 'auto', flexWrap: 'wrap', justifyContent: 'center' }}>
+
+                                {/* EQUIP BUTTON */}
+                                {['WEAPON', 'ARMOR', 'HELMET', 'BOOTS', 'GLOVES', 'CAPE', 'OFF_HAND', 'TOOL', 'FOOD', 'TOOL_AXE', 'TOOL_PICKAXE', 'TOOL_KNIFE', 'TOOL_SICKLE', 'TOOL_ROD'].includes(data.type) && (
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onShowInfo(data);
+                                            console.log('[InventoryPanel] Equip clicked:', id);
+                                            if (!socket) {
+                                                console.error('[InventoryPanel] Socket is null');
+                                                return;
+                                            }
+                                            socket.emit('equip_item', { itemId: id });
+                                        }}
+                                        style={{
+                                            flex: '1 1 0%',
+                                            padding: '4px 0',
+                                            fontSize: '0.55rem',
+                                            background: 'var(--accent)',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            color: '#000',
+                                            fontWeight: 'bold'
                                         }}
                                     >
-                                        <Info size={14} color="#fff" />
-                                    </div>
-                                </div>
+                                        EQUIP
+                                    </button>
+                                )}
 
-                                <div style={{
-                                    fontSize: '0.65rem',
-                                    textAlign: 'center',
-                                    fontWeight: '900',
-                                    color: '#eee',
-                                    height: '2.4em',
-                                    overflow: 'hidden',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px',
-                                    marginBottom: '8px',
-                                    lineHeight: '1.2'
-                                }}>
-                                    {data.name}
-                                </div>
-
-                                <div style={{
-                                    fontSize: '0.9rem',
-                                    fontWeight: '900',
-                                    color: '#d4af37',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    width: '100%',
-                                    textAlign: 'center',
-                                    borderRadius: '6px',
-                                    padding: '4px 0',
-                                    fontFamily: 'monospace'
-                                }}>
-                                    {amount.toLocaleString()}
-                                </div>
-
-                                {/* Quick Actions Overlay (Hides and shows on selection or hover simulated) */}
-                                <div style={{ width: '100%', marginTop: '10px' }}>
-                                    <div style={{ display: 'flex', gap: '5px' }}>
-                                        {['WEAPON', 'ARMOR', 'HELMET', 'BOOTS', 'GLOVES', 'CAPE', 'OFF_HAND', 'TOOL', 'FOOD'].includes(data.type) && (
-                                            <button
-                                                onClick={() => socket.emit('equip_item', { itemId: id })}
-                                                style={{
-                                                    flex: 1,
-                                                    background: 'rgba(76, 175, 80, 0.1)',
-                                                    border: '1px solid rgba(76, 175, 80, 0.3)',
-                                                    color: '#4caf50',
-                                                    fontSize: '0.55rem',
-                                                    padding: '6px 0',
-                                                    borderRadius: '4px',
-                                                    fontWeight: '900',
-                                                    letterSpacing: '1px',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >EQUIPAR</button>
-                                        )}
-                                        <button
-                                            onClick={() => socket.emit('sell_item', { itemId: id, quantity: 1 })}
-                                            style={{
-                                                flex: 1,
-                                                background: 'rgba(255, 68, 68, 0.03)',
-                                                border: '1px solid rgba(255, 68, 68, 0.1)',
-                                                color: '#ff4d4d',
-                                                fontSize: '0.55rem',
-                                                padding: '6px 0',
-                                                borderRadius: '4px',
-                                                fontWeight: '900',
-                                                letterSpacing: '1px',
-                                                cursor: 'pointer'
-                                            }}
-                                        >VENDER</button>
-                                    </div>
-                                </div>
+                                {/* SELL BUTTON */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log('[InventoryPanel] Sell clicked:', id);
+                                        if (window.confirm(`Vender ${data.name} por ${sellPrice} moedas?`)) {
+                                            socket.emit('sell_item_vendor', { itemId: id, quantity: 1 });
+                                        }
+                                    }}
+                                    style={{
+                                        flex: '1 1 0%',
+                                        padding: '4px 0',
+                                        fontSize: '0.55rem',
+                                        background: '#ff4444',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        color: '#fff',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    SELL
+                                </button>
+                                {/* List Button placeholder to match UI request */}
+                                <button
+                                    style={{
+                                        flex: 1,
+                                        padding: '4px 0',
+                                        fontSize: '0.55rem',
+                                        background: 'var(--accent)',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        color: '#000',
+                                        fontWeight: 'bold',
+                                        opacity: 0.5 // Disabled look for now
+                                    }}
+                                    disabled
+                                >
+                                    LIST
+                                </button>
                             </div>
-                        );
-                    })}
-
-                    {filteredItems.length === 0 && (
-                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px 0', color: '#444' }}>
-                            <Package size={40} style={{ opacity: 0.1, marginBottom: '20px' }} />
-                            <p style={{ fontSize: '0.7rem', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase' }}>Vazio</p>
                         </div>
-                    )}
-                </div>
+                    );
+                })}
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, Minus } from 'lucide-react';
 
-const ChatWidget = ({ socket, user, characterName }) => {
+const ChatWidget = ({ socket, user, characterName, isMobile }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
@@ -55,7 +55,7 @@ const ChatWidget = ({ socket, user, characterName }) => {
                 }}
                 style={{
                     position: 'fixed',
-                    bottom: '140px',
+                    bottom: isMobile ? '80px' : '140px',
                     right: '20px',
                     width: '56px',
                     height: '56px',
@@ -107,10 +107,11 @@ const ChatWidget = ({ socket, user, characterName }) => {
             />
             <div style={{
                 position: 'fixed',
-                bottom: '20px',
-                right: '90px',
-                width: '320px',
-                height: '400px',
+                bottom: isMobile ? '80px' : '20px',
+                right: isMobile ? '50%' : '90px',
+                transform: isMobile ? 'translateX(50%)' : 'none',
+                width: isMobile ? '90vw' : '320px',
+                height: isMobile ? '50vh' : '400px',
                 background: '#1a1a2e',
                 border: '2px solid #d4af37',
                 borderRadius: '12px',

@@ -41,7 +41,7 @@ const Auth = ({ onLogin }) => {
                 if (logError) {
                     setError(logError.message);
                 } else {
-                    onLogin(data.session);
+                    if (onLogin) onLogin(data.session);
                 }
             }
         } catch (err) {

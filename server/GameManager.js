@@ -324,13 +324,19 @@ export class GameManager {
     }
 
     async equipItem(userId, itemId) {
+        console.log(`[GameManager] equipItem called for user ${userId}, item ${itemId}`);
         const char = await this.getCharacter(userId);
         const item = this.resolveItem(itemId);
-        if (!item) throw new Error("Item não encontrado");
+        if (!item) {
+            console.error(`[GameManager] Item not found: ${itemId}`);
+            throw new Error("Item não encontrado");
+        }
 
         // Validar se é um equipamento
         const validSlots = ['WEAPON', 'ARMOR', 'HELMET', 'BOOTS', 'GLOVES', 'CAPE', 'OFF_HAND', 'TOOL', 'TOOL_AXE', 'TOOL_PICKAXE', 'TOOL_KNIFE', 'TOOL_SICKLE', 'TOOL_ROD', 'FOOD'];
+        console.log(`[GameManager] Item type: ${item.type}`);
         if (!validSlots.includes(item.type)) {
+            console.error(`[GameManager] Invalid slot type: ${item.type}`);
             throw new Error("Este item não pode ser equipado");
         }
 
@@ -338,6 +344,7 @@ export class GameManager {
 
         // Verificar se tem no inventário
         if (!state.inventory[itemId] || state.inventory[itemId] < 1) {
+            console.error(`[GameManager] User does not have item: ${itemId}`);
             throw new Error("Você não possui este item");
         }
 
@@ -418,6 +425,36 @@ export class GameManager {
 
         await this.saveState(char.id, state);
         return { success: true, message: "Item desequipado", state };
+    }
+
+    async sellItemToVendor(userId, itemId, quantity = 1) {
+        const char = await this.getCharacter(userId);
+        const item = this.resolveItem(itemId);
+        if (!item) throw new Error("Item não encontrado");
+
+        const state = char.state;
+
+        if (!state.inventory[itemId] || state.inventory[itemId] < quantity) {
+            throw new Error("Você não possui este item suficiente");
+        }
+
+        // Calculate Price based on Tier and Rarity
+        // Base Price = Tier * 5
+        // Rarity Bonus = Quality Index * 10
+        const basePrice = (item.tier || 1) * 5;
+        const qualityBonus = (item.quality || 0) * 10;
+        const unitPrice = Math.max(1, basePrice + qualityBonus);
+        const totalPrice = unitPrice * quantity;
+
+        // Remove item
+        state.inventory[itemId] -= quantity;
+        if (state.inventory[itemId] <= 0) delete state.inventory[itemId];
+
+        // Add Silver
+        state.silver = (state.silver || 0) + totalPrice;
+
+        await this.saveState(char.id, state);
+        return { success: true, message: `Vendido ${quantity}x ${item.name} por ${totalPrice} silver` };
     }
 
 

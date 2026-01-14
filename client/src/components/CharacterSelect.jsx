@@ -20,6 +20,14 @@ const CharacterSelect = ({ socket, user, gameState, onLogout, onSelect }) => {
                 <div style={{ textAlign: 'center' }}>
                     <div className="loading-spinner" style={{ marginBottom: '20px' }}>Carregando personagem...</div>
                     <div style={{ opacity: 0.5, fontSize: '0.8rem' }}>Conectando à Forged Lands...</div>
+                    <div style={{ marginTop: '20px', color: '#ff4444', fontSize: '0.7rem', maxWidth: '300px', wordBreak: 'break-all' }}>
+                        <b>DEBUG INFO:</b><br />
+                        URL: {window.location.href}<br />
+                        Socket URI: {socket?.io?.uri || 'N/A'}<br />
+                        Status: {socket?.connected ? 'Conectado' : 'Desconectado'}<br />
+                        GameState: {gameState ? 'CARREGADO' : 'NULL'}<br />
+                        User ID: {user?.id || 'N/A'}
+                    </div>
                 </div>
             </div>
         );

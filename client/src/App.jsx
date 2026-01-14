@@ -61,7 +61,7 @@ function App() {
   const [characterSelected, setCharacterSelected] = useState(false);
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'gathering');
+  const [activeTab, setActiveTab] = useState('profile');
   const [activeCategory, setActiveCategory] = useState(() => localStorage.getItem('activeCategory') || 'WOOD');
   const [activeTier, setActiveTier] = useState(() => parseInt(localStorage.getItem('activeTier')) || 1);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -101,7 +101,13 @@ function App() {
 
   useEffect(() => {
     if (session) {
-      const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+      // Determinar URL do Socket dinamicamente para suportar acesso via rede (Mobile)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+      console.log('[DEBUG] Connecting to Socket.IO at:', apiUrl);
+      console.log('[DEBUG] Using token:', session.access_token ? 'Yes' : 'No');
+
+      const newSocket = io(apiUrl, {
         auth: { token: session.access_token }
       });
 

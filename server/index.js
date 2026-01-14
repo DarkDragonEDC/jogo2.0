@@ -45,6 +45,8 @@ app.get('/api/me', authMiddleware, (req, res) => {
 });
 
 io.use(async (socket, next) => {
+    console.log('[DEBUG] Incoming connection attempt:', socket.id);
+    console.log('[DEBUG] Handshake auth token present:', !!(socket.handshake.auth.token || socket.handshake.headers.authorization));
     const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
 
     if (!token) {
@@ -55,12 +57,15 @@ io.use(async (socket, next) => {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
         if (error || !user) {
+            console.log('[DEBUG] Auth failed:', error?.message || 'No user found');
             return next(new Error("Authentication error: Invalid token"));
         }
 
+        console.log('[DEBUG] Auth success for user:', user.email);
         socket.user = user;
         next();
     } catch (err) {
+        console.log('[DEBUG] Auth exception:', err.message);
         return next(new Error("Authentication error: " + err.message));
     }
 });
@@ -177,6 +182,17 @@ io.on('connection', (socket) => {
             socket.emit('status_update', await gameManager.getStatus(socket.user.id));
         } catch (err) {
             console.error('Error unequipping item:', err);
+            socket.emit('error', { message: err.message });
+        }
+    });
+
+    socket.on('sell_item_vendor', async ({ itemId, quantity }) => {
+        try {
+            const result = await gameManager.sellItemToVendor(socket.user.id, itemId, quantity);
+            socket.emit('item_sold_vendor', result);
+            socket.emit('status_update', await gameManager.getStatus(socket.user.id));
+        } catch (err) {
+            console.error('Error selling item to vendor:', err);
             socket.emit('error', { message: err.message });
         }
     });

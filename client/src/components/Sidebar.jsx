@@ -218,7 +218,7 @@ const Sidebar = ({ gameState, activeTab, setActiveTab, activeCategory, setActive
                             }}
                         >
                             <span style={{ color: activeTab === item.id ? '#d4af37' : '#444' }}>{item.icon}</span>
-                            <span style={{ flex: 1, fontWeight: activeTab === item.id ? '700' : '400', fontSize: '0.75rem', letterSpacing: '0.3px' }}>{item.label}</span>
+                            <span style={{ flex: 1, fontWeight: activeTab === item.id ? '700' : '500', fontSize: '0.9rem', letterSpacing: '0.3px' }}>{item.label}</span>
 
                             {item.skill && !item.children && <SkillInfo skillKey={item.skill} />}
                             {item.children && (

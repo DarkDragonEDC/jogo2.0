@@ -377,7 +377,7 @@ const MarketPanel = ({ socket, gameState, silver, onShowInfo }) => {
                                 <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Box size={16} /> Select Item to Sell
                                 </h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: '10px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: '8px' }}>
                                     {Object.entries(gameState.state?.inventory || {}).map(([id, qty]) => {
                                         const data = resolveItem(id);
                                         const isSelected = selectedItemToSell === id;
